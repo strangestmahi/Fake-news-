@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -236,4 +237,244 @@
 
   <script src="app.js"></script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VerifAI — AI News Credibility Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="wrap nav-wrap">
+      <a class="logo" href="#">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+          <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" stroke="#4ade80" stroke-width="1.6" fill="none"/>
+          <polygon points="14,8 20,11 20,17 14,20 8,17 8,11" fill="#4ade80" opacity="0.18"/>
+          <circle cx="14" cy="14" r="2.4" fill="#4ade80"/>
+        </svg>
+        <span>Verif<em>AI</em></span>
+      </a>
+      <nav class="desktop-nav">
+        <a href="#how">How it works</a>
+        <a href="#tech">Technology</a>
+        <a href="#checker" class="nav-cta">Try it free &rarr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-eyebrow">
+        <span class="pulse-dot"></span>
+        AI-Powered &middot; Real-time Verification &middot; RAG Architecture
+      </div>
+      <h1>
+        Stop misinformation<br />
+        <span class="h1-accent">before it spreads.</span>
+      </h1>
+      <p class="hero-sub">
+        Paste any headline or article. VerifAI uses semantic vector search
+        over verified sources and large language models to deliver credibility
+        scores, contextual background, and trusted references — in seconds.
+      </p>
+      <div class="hero-btns">
+        <a href="#checker" class="btn-primary">Analyse a headline</a>
+        <a href="#how" class="btn-ghost">See how it works</a>
+      </div>
+      <div class="hero-pills">
+        <div class="pill"><span class="pill-val">99ms</span><span class="pill-lbl">avg response</span></div>
+        <span class="pill-sep"></span>
+        <div class="pill"><span class="pill-val">Vector RAG</span><span class="pill-lbl">architecture</span></div>
+        <span class="pill-sep"></span>
+        <div class="pill"><span class="pill-val">Multi-LLM</span><span class="pill-lbl">modular support</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKER -->
+  <section id="checker" class="checker-section">
+    <div class="wrap">
+      <div class="checker-card">
+
+        <div class="checker-top">
+          <div>
+            <h2 class="checker-title">News Credibility Checker</h2>
+            <p class="checker-sub">Powered by vector embeddings + LLM synthesis</p>
+          </div>
+          <div class="online-pill">
+            <span class="online-dot"></span>
+            Model online
+          </div>
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label" for="news-input">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M2 7h7M2 10.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Headline or article text
+          </label>
+          <textarea id="news-input" placeholder="Paste a news headline or article excerpt here&#8230;" rows="5" maxlength="2000"></textarea>
+          <div class="field-footer">
+            <span class="field-hint">Ctrl+Enter to submit</span>
+            <span class="char-count" id="char-count">0 / 2000</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-analyse" id="check-btn" onclick="checkNews()">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Analyse
+          </button>
+          <button class="btn-clear" onclick="clearAll()">Clear</button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading-wrap" id="loading" style="display:none">
+          <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+          <p class="step-txt" id="step-txt">Embedding input&hellip;</p>
+        </div>
+
+        <!-- Result -->
+        <div class="result-wrap" id="result-box" style="display:none">
+
+          <div class="result-top">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 80 80" width="76" height="76">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="7"/>
+                <circle id="score-arc" cx="40" cy="40" r="32" fill="none"
+                  stroke="#4ade80" stroke-width="7" stroke-linecap="round"
+                  stroke-dasharray="201" stroke-dashoffset="201"
+                  transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="ring-val" id="score-label">—</span>
+            </div>
+            <div class="verdict-block">
+              <div class="verdict-chip" id="verdict-chip">—</div>
+              <p class="verdict-desc" id="verdict-desc">Your credibility analysis will appear here.</p>
+            </div>
+          </div>
+
+          <div class="tabs-bar">
+            <button class="tab active" data-tab="context" onclick="switchTab(this,'context')">Context</button>
+            <button class="tab" data-tab="sources" onclick="switchTab(this,'sources')">Sources</button>
+            <button class="tab" data-tab="summary" onclick="switchTab(this,'summary')">AI Summary</button>
+          </div>
+
+          <div id="tab-context" class="tab-pane"><p id="context-text" class="pane-txt"></p></div>
+          <div id="tab-sources" class="tab-pane hidden"><ul id="sources-list" class="src-list"></ul></div>
+          <div id="tab-summary" class="tab-pane hidden"><p id="summary-text" class="pane-txt"></p></div>
+
+        </div>
+
+        <!-- Error -->
+        <div class="err-box" id="err-box" style="display:none">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#f87171" stroke-width="1.2"/><path d="M8 5v3.5M8 11v.25" stroke="#f87171" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span id="err-msg">Something went wrong. Please try again.</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="how-section">
+    <div class="wrap">
+      <p class="section-eye">Process</p>
+      <h2 class="section-h">Four steps. One clear answer.</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-n">01</div>
+          <h3>Input</h3>
+          <p>Drop in any news text — headline, article, or social post excerpt. Up to 2,000 characters.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">02</div>
+          <h3>Embed</h3>
+          <p>SentenceTransformers converts your text into high-dimensional vectors that capture semantic meaning.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">03</div>
+          <h3>Retrieve</h3>
+          <p>FAISS / ChromaDB semantic search surfaces the most relevant verified articles from trusted sources.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-n">04</div>
+          <h3>Synthesise</h3>
+          <p>An LLM analyses retrieved context and generates a credibility score, background, and plain-language summary.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECHNOLOGY -->
+  <section id="tech" class="tech-section">
+    <div class="wrap">
+      <p class="section-eye">Technology</p>
+      <h2 class="section-h">Built on proven AI infrastructure</h2>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-ico">
+            <svg width="22" height="22" viewBox="0 0 28 28" fill="none"><polygon points="14,2 26,8 26,20 14,26 2,20 2,8" stroke="#4ade80" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#4ade80" opacity="0.7"/></svg>
+          </div>
+          <h3>Vector Database</h3>
+          <p>FAISS and ChromaDB enable sub-millisecond semantic search across millions of indexed news vectors.</p>
+          <div class="tag-row"><span>FAISS</span><span>ChromaDB</span></div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="4" stroke="#a78bfa" stroke-width="1.5"/><path d="M8 12h8M12 8v8" stroke="#a78bfa" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Language Models</h3>
+          <p>Modular LLM support — swap between OpenAI GPT, Meta Llama, and Mistral without code changes.</p>
+          <div class="tag-row"><span>Llama</span><span>Mistral</span><span>GPT-4o</span></div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-ico">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#38bdf8" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#38bdf8" opacity="0.6"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <h3>RAG Pipeline</h3>
+          <p>Retrieval-Augmented Generation grounds every response in real source material — no hallucinations.</p>
+          <div class="tag-row"><span>LangChain</span><span>SentenceTransformers</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="cta-section">
+    <div class="wrap cta-inner">
+      <h2>Ready to fight misinformation?</h2>
+      <p>Start verifying news in seconds — no account required.</p>
+      <a href="#checker" class="btn-primary">Try VerifAI now</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="logo">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><polygon points="14,2 26,8 26,20 14,26 2,20 2,8" stroke="#4ade80" stroke-width="1.6" fill="none"/><circle cx="14" cy="14" r="2.4" fill="#4ade80"/></svg>
+        <span>Verif<em>AI</em></span>
+      </div>
+      <p class="footer-copy">
+        &copy; 2025 VerifAI &mdash; Not a substitute for professional fact-checking.
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+>>>>>>> cc26d38 (Initial clean commit)
 </html>
