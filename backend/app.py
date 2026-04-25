@@ -15,21 +15,23 @@ print("Server starting...")
 
 #  load vector DB 
 client = chromadb.PersistentClient(path="db")
-
-collection = client.get_collection("news")
-
+collection = client.get_or_create_collection("news")
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
 #  fetch real news 
 def fetch_real_news(query):
     api_key = os.getenv("NEWS_API_KEY")
+    if not api_key:
+        return []
+    try:
+        url = f"https://newsapi.org/v2/everything?q={query}&apiKey={api_key}"
+        response = requests.get(url).json()
+        articles = response.get("articles", [])
+        return [article["title"] for article in articles[:5]]
+    except:
+        return []
 
-    url = f"https://newsapi.org/v2/everything?q={query}&apiKey={api_key}"
-    response = requests.get(url).json()
-
-    articles = response.get("articles", [])
-    return [article["title"] for article in articles[:5]]
 
 def is_obviously_fake(text):
     keywords = [
@@ -40,14 +42,39 @@ def is_obviously_fake(text):
     text = text.lower()
     return any(word in text for word in keywords)
 
+
 def is_uncertain(text):
     keywords = ["will", "going to", "prediction", "future", "soon"]
     text = text.lower()
     return any(word in text for word in keywords)
 
+
 # placeholder for LLM 
 def generate_explanation(text, sources):
-    return "AI explanation will be generated here using LLM."
+    prompt = f"""
+    Analyze the following news and determine whether it is real or fake.
+
+    News:
+    {text}
+
+    Related real news:
+    {sources}
+
+    Give a short and clear explanation.
+    """
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "gemma:2b",
+                "prompt": prompt,
+                "stream": False
+            }
+        )
+        result = response.json()
+        return result.get("response", "No explanation generated.")
+    except Exception as e:
+        return f"Error generating explanation: {str(e)}"
 
 
 @app.route('/api/check', methods=['POST'])
@@ -58,27 +85,24 @@ def check():
     #  vector search
     query_emb = model.encode([text]).tolist()
 
-    results = collection.query(
-        query_embeddings=query_emb,
-        n_results=3
-    )
-
-    similar_meta = results['metadatas'][0]
+    if collection.count() == 0:
+        similar_meta = []
+    else:
+        results = collection.query(
+            query_embeddings=query_emb,
+            n_results=3
+        )
+        similar_meta = results['metadatas'][0]
 
     #  logic
-    fake_count = sum(1 for m in similar_meta if m["label"] == "FAKE")
-
     if is_obviously_fake(text):
         verdict = "low"
         score = 10
-
     elif is_uncertain(text):
         verdict = "medium"
         score = 50
-
     else:
         fake_count = sum(1 for m in similar_meta if m["label"] == "FAKE")
-
         if fake_count == 3:
             verdict = "low"
             score = 30

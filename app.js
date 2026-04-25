@@ -1,59 +1,3 @@
-/**
- * VerifAI — Fake News Context Checker
- * ════════════════════════════════════════════════════════
- *
- *  BACKEND INTEGRATION (for your Python / Flask teammate)
- * ────────────────────────────────────────────────────────
- *
- *  This file calls ONE endpoint:
- *
- *    POST  /api/check
- *    Content-Type: application/json
- *    Body: { "text": "<user input string>" }
- *
- *  Expected success response (HTTP 200):
- *  {
- *    "score":   75,          // integer 0-100
- *    "verdict": "high",      // "high" | "medium" | "low"
- *    "context": "...",       // contextual background paragraph
- *    "summary": "...",       // plain-language LLM summary
- *    "sources": [
- *      {
- *        "title":     "Article title",
- *        "url":       "https://...",
- *        "publisher": "BBC News",
- *        "date":      "2024-11-02"   // optional
- *      }
- *    ]
- *  }
- *
- *  Error response (any non-200):
- *  { "error": "Human-readable message" }
- *
- * ────────────────────────────────────────────────────────
- *  Python / Flask quickstart:
- *
- *    pip install flask flask-cors
- *
- *    from flask import Flask, request, jsonify
- *    from flask_cors import CORS
- *
- *    app = Flask(__name__)
- *    CORS(app)   # allow frontend origin
- *
- *    @app.route('/api/check', methods=['POST'])
- *    def check():
- *        data   = request.get_json()
- *        text   = data.get('text', '')
- *        result = run_rag_pipeline(text)   # your RAG function
- *        return jsonify(result)
- *
- *    if __name__ == '__main__':
- *        app.run(debug=True, port=5000)
- *
- *  Change API_BASE below to match your server address.
- * ════════════════════════════════════════════════════════
- */
 
 const API_BASE = 'http://localhost:5000';
 
@@ -227,6 +171,11 @@ function esc(str) {
 }
 
 // ── Keyboard shortcut ─────────────────────────────────────
+// ── Keyboard shortcut ─────────────────────────────────────
 newsInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) checkNews();
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    checkNews();
+  }
+  // Shift+Enter = new line (default browser behavior)
 });
