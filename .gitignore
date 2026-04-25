@@ -1,6 +1,10 @@
 venv/
 backend/venv/
+backend/db/
+__pycache__/
+*.pyc
 *.csv
 *.dll
 *.zip
 *.pth
+.env
