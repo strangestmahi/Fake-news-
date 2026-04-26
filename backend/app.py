@@ -5,6 +5,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from groq import Groq
+import json
 
 load_dotenv()
 
@@ -12,7 +13,6 @@ app = Flask(__name__)
 
 print("Server starting...")
 
-# load vector DB 
 client = chromadb.PersistentClient(path="db")
 collection = client.get_or_create_collection("news")
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -26,7 +26,6 @@ def after_request(response):
     return response
 
 
-# fetch real news 
 def fetch_real_news(query):
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
@@ -40,35 +39,48 @@ def fetch_real_news(query):
         return []
 
 
-def is_obviously_fake(text):
-    keywords = [
-        "alien", "aliens", "ghost", "zombie",
-        "time travel", "immortal", "flying humans",
-        "dragon", "superpower"
-    ]
-    text = text.lower()
-    return any(word in text for word in keywords)
-
-
-def is_uncertain(text):
-    keywords = ["will", "going to", "prediction", "future", "soon"]
-    text = text.lower()
-    return any(word in text for word in keywords)
-
-
-def generate_explanation(text, sources):
+def get_llm_verdict(text, sources):
     groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
     prompt = f"""
-    Analyze the following news and determine whether it is real or fake.
+    You are a fake news detection system.
+
+    Classification rules:
+    - HIGH = Real / credible news
+    - MEDIUM = Uncertain / partially true
+    - LOW = Fake / misleading news
+
     News: {text}
     Related real news: {sources}
-    Give a short and clear explanation.
+
+    Return ONLY valid JSON:
+    {{
+      "verdict": "high/medium/low",
+      "score": number between 0-100,
+      "explanation": "short explanation that matches the verdict"
+    }}
+
+    IMPORTANT:
+    - If explanation says fake → verdict MUST be LOW
+    - If explanation says real → verdict MUST be HIGH
+    - Keep verdict and explanation consistent
     """
+
     chat = groq_client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.1-8b-instant",
     )
-    return chat.choices[0].message.content
+
+    response = chat.choices[0].message.content
+
+    try:
+        return json.loads(response)
+    except:
+        return {
+            "verdict": "medium",
+            "score": 50,
+            "explanation": response
+        }
 
 
 @app.route('/api/check', methods=['POST', 'OPTIONS'])
@@ -81,35 +93,22 @@ def check():
 
     query_emb = model.encode([text]).tolist()
 
-    if collection.count() == 0:
-        similar_meta = []
-    else:
-        results = collection.query(
-            query_embeddings=query_emb,
-            n_results=3
-        )
-        similar_meta = results['metadatas'][0]
-
-    if is_obviously_fake(text):
-        verdict = "low"
-        score = 10
-    elif is_uncertain(text):
-        verdict = "medium"
-        score = 50
-    else:
-        fake_count = sum(1 for m in similar_meta if m["label"] == "FAKE")
-        if fake_count == 3:
-            verdict = "low"
-            score = 30
-        elif fake_count == 2:
-            verdict = "medium"
-            score = 50
-        else:
-            verdict = "high"
-            score = 80
-
     real_news = fetch_real_news(text)
-    explanation = generate_explanation(text, real_news)
+
+    llm_result = get_llm_verdict(text, real_news)
+
+    verdict = llm_result.get("verdict", "medium").lower()
+    score = llm_result.get("score", 50)
+    explanation = llm_result.get("explanation", "No explanation")
+
+    exp_lower = explanation.lower()
+
+    if "fake" in exp_lower or "misleading" in exp_lower:
+        verdict = "low"
+        score = min(score, 40)
+    elif "real" in exp_lower or "credible" in exp_lower:
+        verdict = "high"
+        score = max(score, 60)
 
     return jsonify({
         "score": score,
@@ -128,4 +127,4 @@ def check():
 
 
 if __name__ == '__main__':
-  app.run(host="0.0.0.0", port=7860, debug=False)
+    app.run(host="0.0.0.0", port=7860, debug=False)
