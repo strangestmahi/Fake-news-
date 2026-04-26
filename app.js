@@ -1,5 +1,4 @@
-
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://strangestmahi-fake-news-detector.hf.space';
 // ── DOM refs ──────────────────────────────────────────────
 const newsInput  = document.getElementById('news-input');
 const charCount  = document.getElementById('char-count');
