@@ -1,25 +1,32 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import chromadb
 from sentence_transformers import SentenceTransformer
 import requests
 import os
 from dotenv import load_dotenv
+from groq import Groq
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
 
 print("Server starting...")
 
-#  load vector DB 
+# load vector DB 
 client = chromadb.PersistentClient(path="db")
 collection = client.get_or_create_collection("news")
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
-#  fetch real news 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
+
+# fetch real news 
 def fetch_real_news(query):
     api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
@@ -49,40 +56,29 @@ def is_uncertain(text):
     return any(word in text for word in keywords)
 
 
-# placeholder for LLM 
 def generate_explanation(text, sources):
+    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
     prompt = f"""
     Analyze the following news and determine whether it is real or fake.
-
-    News:
-    {text}
-
-    Related real news:
-    {sources}
-
+    News: {text}
+    Related real news: {sources}
     Give a short and clear explanation.
     """
-    try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "gemma:2b",
-                "prompt": prompt,
-                "stream": False
-            }
-        )
-        result = response.json()
-        return result.get("response", "No explanation generated.")
-    except Exception as e:
-        return f"Error generating explanation: {str(e)}"
+    chat = groq_client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.1-8b-instant",
+    )
+    return chat.choices[0].message.content
 
 
-@app.route('/api/check', methods=['POST'])
+@app.route('/api/check', methods=['POST', 'OPTIONS'])
 def check():
+    if request.method == 'OPTIONS':
+        return '', 204
+
     data = request.get_json()
     text = data.get('text', '')
 
-    #  vector search
     query_emb = model.encode([text]).tolist()
 
     if collection.count() == 0:
@@ -94,7 +90,6 @@ def check():
         )
         similar_meta = results['metadatas'][0]
 
-    #  logic
     if is_obviously_fake(text):
         verdict = "low"
         score = 10
@@ -113,10 +108,7 @@ def check():
             verdict = "high"
             score = 80
 
-    # real-time sources
     real_news = fetch_real_news(text)
-
-    # LLM placeholder
     explanation = generate_explanation(text, real_news)
 
     return jsonify({
@@ -127,7 +119,7 @@ def check():
         "sources": [
             {
                 "title": news,
-                "url": "https//news.google.com",
+                "url": "https://news.google.com",
                 "publisher": "News API",
                 "date": "2026"
             } for news in real_news
