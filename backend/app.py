@@ -127,7 +127,7 @@ def check():
         "sources": [
             {
                 "title": news,
-                "url": "live news",
+                "url": "https//news.google.com",
                 "publisher": "News API",
                 "date": "2026"
             } for news in real_news
